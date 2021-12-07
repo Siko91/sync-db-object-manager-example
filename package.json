@@ -1,0 +1,24 @@
+{
+  "name": "sync-db-object-manager-example",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Siko91/sync-db-object-manager-example.git"
+  },
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Siko91/sync-db-object-manager-example/issues"
+  },
+  "homepage": "https://github.com/Siko91/sync-db-object-manager-example#readme",
+  "dependencies": {
+    "just-clone": "^5.0.1",
+    "typescript": "^4.5.2",
+    "@types/node": "^16.11.11"
+  }
+}
