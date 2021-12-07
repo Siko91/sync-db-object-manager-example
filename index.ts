@@ -39,29 +39,29 @@ async function main() {
   // heavy demo
   await incrementEachManagerNTimes(managersList, 1000); // end counts should be [1006, 1003, 1013]
 
-  // 2 heavy demos running almost at once
-  const bigIncrementPromise1 = incrementEachManagerNTimes(managersList, 100);
-  const bigIncrementPromise2 = wait(20).then(() =>
+  // 3 heavy demos running almost at once
+  const heavyDemoPromise1 = incrementEachManagerNTimes(managersList, 100);
+  const heavyDemoPromise2 = wait(20).then(() =>
     incrementEachManagerNTimes(managersList, 400)
   );
-  const bigIncrementPromise3 = wait(50).then(() =>
+  const heavyDemoPromise3 = wait(50).then(() =>
     incrementEachManagerNTimes(managersList, 500)
   );
   await Promise.all([
-    bigIncrementPromise1,
-    bigIncrementPromise2,
-    bigIncrementPromise3,
+    heavyDemoPromise1,
+    heavyDemoPromise2,
+    heavyDemoPromise3,
   ]); // end counts should be [2006, 2003, 2013]
 
   // Check results
-  const dbCouns = getRowsSync().map((i) => i.counter);
-  const liveCouns = [
+  const dbCounts = getRowsSync().map((i) => i.counter);
+  const liveCounts = [
     managersList[0].manager.getClone().counter,
     managersList[1].manager.getClone().counter,
     managersList[2].manager.getClone().counter,
   ];
   console.log("-------");
   console.log(" expected : [2006,2003,2013]");
-  console.log(" db       : " + JSON.stringify(dbCouns));
-  console.log(" live     : " + JSON.stringify(liveCouns));
+  console.log(" db       : " + JSON.stringify(dbCounts));
+  console.log(" live     : " + JSON.stringify(liveCounts));
 }
