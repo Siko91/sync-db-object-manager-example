@@ -1,4 +1,4 @@
-import { createManagedCounter, loadManagedCounters } from "./demos/init";
+import { createManagedObject, loadManagedObjects } from "./demos/init";
 import {
   incrementBy3,
   incrementEachManagerNTimes,
@@ -13,44 +13,52 @@ main().catch((err) => {
 
 async function main() {
   // loaded 2 managers
-  let managers = await loadManagedCounters();
+  const managersList = await loadManagedObjects();
 
   // very simple demo
-  await incrementBy3(managers["1"]); // 0 -> 3
+  const manager1 = managersList[0].manager;
+  const simplePromise1 = manager1.getWriteAccess((obj) => obj.counter++);
+  const simplePromise2 = manager1.getWriteAccess((obj) => obj.counter++);
+  const simplePromise3 = manager1.getWriteAccess((obj) => obj.counter++);
+  await Promise.all([simplePromise1, simplePromise2, simplePromise3]); // counter changes from 0 to 3
 
-  // +1 => 3 managers
-  managers = {
-    ...managers,
-    ...(await createManagedCounter({
+  // add +1 manager => 3 managers
+  managersList.push(
+    await createManagedObject({
       counter: 10,
       name: "counter 3",
-    })),
-  };
+    })
+  );
 
-  // simple demo
-  await incrementBy3(managers["1"]); // 3 -> 6
-  await incrementBy3(managers["2"]); // 0 -> 3
-  await incrementBy3(managers["3"]); // 10 -> 13
+  // concurrent simple demo
+  const triplePromise1 = incrementBy3(managersList[0].manager); // 3 -> 6
+  const triplePromise2 = incrementBy3(managersList[1].manager); // 0 -> 3
+  const triplePromise3 = incrementBy3(managersList[2].manager); // 10 -> 13
+  await Promise.all([triplePromise1, triplePromise2, triplePromise3]);
 
   // heavy demo
-  await incrementEachManagerNTimes(managers, 1000); // end counts should be [1006, 1003, 1013]
+  await incrementEachManagerNTimes(managersList, 1000); // end counts should be [1006, 1003, 1013]
 
   // 2 heavy demos running almost at once
-  const demoPromise1 = incrementEachManagerNTimes(managers, 100);
-  const demoPromise2 = wait(20).then(() =>
-    incrementEachManagerNTimes(managers, 400)
+  const bigIncrementPromise1 = incrementEachManagerNTimes(managersList, 100);
+  const bigIncrementPromise2 = wait(20).then(() =>
+    incrementEachManagerNTimes(managersList, 400)
   );
-  const demoPromise3 = wait(50).then(() =>
-    incrementEachManagerNTimes(managers, 500)
+  const bigIncrementPromise3 = wait(50).then(() =>
+    incrementEachManagerNTimes(managersList, 500)
   );
-  await Promise.all([demoPromise1, demoPromise2, demoPromise3]); // end counts should be [2006, 2003, 2013]
+  await Promise.all([
+    bigIncrementPromise1,
+    bigIncrementPromise2,
+    bigIncrementPromise3,
+  ]); // end counts should be [2006, 2003, 2013]
 
   // Check results
   const dbCouns = getRowsSync().map((i) => i.counter);
-  const liveCouns =  [
-    managers["1"].getClone().counter,
-    managers["2"].getClone().counter,
-    managers["3"].getClone().counter,
+  const liveCouns = [
+    managersList[0].manager.getClone().counter,
+    managersList[1].manager.getClone().counter,
+    managersList[2].manager.getClone().counter,
   ];
   console.log("-------");
   console.log(" expected : [2006,2003,2013]");

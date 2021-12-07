@@ -38,14 +38,14 @@ export async function callConcurrentIncrements(
 
 export async function incrementEachManagerNTimes(
   managers: {
-    [key: string]: LiveObjectStateManager<FakeDbType>;
-  },
+    id: string;
+    manager: LiveObjectStateManager<FakeDbType>;
+  }[],
   count: number
 ): Promise<void> {
-  const keys = Object.keys(managers);
   const promises: Promise<void>[] = [];
-  for (const key of keys) {
-    const promiseForManager = callConcurrentIncrements(managers[key], count);
+  for (const i of managers) {
+    const promiseForManager = callConcurrentIncrements(i.manager, count);
     promises.push(promiseForManager);
   }
   await Promise.all(promises);
