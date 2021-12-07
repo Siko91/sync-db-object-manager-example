@@ -1,69 +1,75 @@
-import justClone from "just-clone";
+import { clonePrototype } from "clone";
 import { simulateWait } from "../utils/timing";
 
 export type FakeDbType = {
   _id: string;
   name: string;
   counter: number;
-  save: () => Promise<FakeDbType>;
 };
 
-export const FakeDbModel = {
-  __counters: [
-    { _id: "1", name: "counter 1", counter: 0 },
-    { _id: "2", name: "counter 2", counter: 0 },
-  ],
-  __nextId: 3,
+let __rows = [
+  { _id: "1", name: "counter 1", counter: 0 },
+  { _id: "2", name: "counter 2", counter: 0 },
+];
+let __nextId = 3;
 
+export function getRowsSync() {
+  return clonePrototype(__rows);
+} 
+
+export const FakeDbModel = {
   create: async function create(createInfo: {
     name: string;
     counter: number;
   }): Promise<FakeDbType> {
     await simulateWait();
-    const _id = this.__nextId.toString();
-    this.__nextId++;
-    FakeDbModel.__counters.push({ _id, ...createInfo });
+    const _id = __nextId.toString();
+    __nextId++;
+    __rows.push({ _id, ...createInfo });
     return await this.findById(_id);
   },
 
   find: async function find(): Promise<FakeDbType[]> {
     await simulateWait();
-    const clones: Partial<FakeDbType>[] = justClone<Partial<FakeDbType>[]>(
-      FakeDbModel.__counters
+    const clones: Partial<FakeDbType>[] = clonePrototype<Partial<FakeDbType>[]>(
+      __rows
     );
-    for (const clone of clones) {
-      clone.save = () => FakeDbModel.updateOne(clone._id!, clone);
-    }
     return clones as FakeDbType[];
   },
 
   findById: async function findById(id: string): Promise<FakeDbType> {
     await simulateWait();
     let index = NaN;
-    for (let i = 0; i < FakeDbModel.__counters.length; i++) {
-      if (FakeDbModel.__counters[i]._id === id) {
+    for (let i = 0; i < __rows.length; i++) {
+      if (__rows[i]._id === id) {
         index = i;
         break;
       }
     }
     if (isNaN(index)) throw new Error("no record with id : " + id);
 
-    const clone: Partial<FakeDbType> = justClone<Partial<FakeDbType>>(
-      FakeDbModel.__counters[index]
+    const clone: Partial<FakeDbType> = clonePrototype<Partial<FakeDbType>>(
+      __rows[index]
     );
-    clone.save = () => FakeDbModel.updateOne(clone._id!, clone);
     return clone as FakeDbType;
   },
 
   updateOne: async function updateOne(
     id: string,
-    updatedObject: Partial<FakeDbType>
-  ): Promise<FakeDbType> {
+    updatedObject: {
+      name?: string;
+      counter?: number;
+    }
+  ): Promise<void> {
+
+    const operationId = Math.random().toString().split('.')[1].substr(0, 5);
+
+    console.log(`[${operationId}] [info] Starting save operation...`);
     await simulateWait();
 
     let index = NaN;
-    for (let i = 0; i < FakeDbModel.__counters.length; i++) {
-      if (FakeDbModel.__counters[i]._id === id) {
+    for (let i = 0; i < __rows.length; i++) {
+      if (__rows[i]._id === id) {
         index = i;
         break;
       }
@@ -73,15 +79,9 @@ export const FakeDbModel = {
 
     await simulateWait();
 
-    FakeDbModel.__counters[index] = {
-      ...FakeDbModel.__counters[index],
-      ...updatedObject,
-    };
+    __rows[index].name = updatedObject.name || __rows[index].name;
+    __rows[index].counter = updatedObject.counter || __rows[index].counter;
 
-    const clone: Partial<FakeDbType> = justClone<Partial<FakeDbType>>(
-      FakeDbModel.__counters[index]
-    );
-    clone.save = () => FakeDbModel.updateOne(clone._id!, clone);
-    return clone as FakeDbType;
+    console.log(`[${operationId}] [info] Saved #${index} [${__rows[index].name}] with counter ${__rows[index].counter}`);
   },
 };

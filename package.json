@@ -17,8 +17,9 @@
   },
   "homepage": "https://github.com/Siko91/sync-db-object-manager-example#readme",
   "dependencies": {
-    "just-clone": "^5.0.1",
-    "typescript": "^4.5.2",
-    "@types/node": "^16.11.11"
+    "@types/clone": "^2.1.1",
+    "@types/node": "^16.11.11",
+    "clone": "^2.1.2",
+    "typescript": "^4.5.2"
   }
 }

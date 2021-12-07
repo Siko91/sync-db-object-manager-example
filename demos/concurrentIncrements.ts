@@ -27,10 +27,8 @@ export async function callConcurrentIncrements(
 
   for (let i = 0; i < count; i++) {
     concurrentPromises.push(
-      new Promise((resolve, reject) => {
-        manager.getWriteAccess((obj) => {
-          obj.counter = obj.counter + 1;
-        });
+      manager.getWriteAccess((obj) => {
+        obj.counter = obj.counter + 1;
       })
     );
   }

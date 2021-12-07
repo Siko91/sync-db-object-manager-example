@@ -1,4 +1,4 @@
-import justClone from "just-clone";
+import { clonePrototype } from "clone";
 
 export class LiveObjectStateManager<T> {
   private instance: T;
@@ -22,7 +22,7 @@ export class LiveObjectStateManager<T> {
   }
 
   public getClone(): Partial<T> {
-    const clone = justClone<Partial<T>>(this.instance);
+    const clone = clonePrototype<Partial<T>>(this.instance);
     return clone;
   }
 
@@ -54,7 +54,7 @@ export class LiveObjectStateManager<T> {
     const wrappedWriteOperation = async () => {
       const responsesToGive = [...this.queueForNextWriteOperation];
       this.queueForNextWriteOperation = [];
-      const clone = justClone<Partial<T>>(this.instance);
+      const clone = clonePrototype<Partial<T>>(this.instance);
       try {
         await writeOperation(clone);
         for (const { resolve } of responsesToGive) {

@@ -4,7 +4,7 @@ import {
   incrementEachManagerNTimes,
 } from "./demos/concurrentIncrements";
 import { wait } from "./utils/timing";
-import { FakeDbModel } from "./mocks/FakeDbModel";
+import { FakeDbModel, getRowsSync } from "./mocks/FakeDbModel";
 
 main().catch((err) => {
   console.error(err);
@@ -14,6 +14,9 @@ main().catch((err) => {
 async function main() {
   // loaded 2 managers
   let managers = await loadManagedCounters();
+
+  // very simple demo
+  await incrementBy3(managers["1"]); // 0 -> 3
 
   // +1 => 3 managers
   managers = {
@@ -25,10 +28,9 @@ async function main() {
   };
 
   // simple demo
-  await incrementBy3(managers["1"]); // 0 -> 3
+  await incrementBy3(managers["1"]); // 3 -> 6
   await incrementBy3(managers["2"]); // 0 -> 3
   await incrementBy3(managers["3"]); // 10 -> 13
-  await incrementBy3(managers["1"]); // 3 -> 6
 
   // heavy demo
   await incrementEachManagerNTimes(managers, 1000); // end counts should be [1006, 1003, 1013]
@@ -44,15 +46,14 @@ async function main() {
   await Promise.all([demoPromise1, demoPromise2, demoPromise3]); // end counts should be [2006, 2003, 2013]
 
   // Check results
-  const finalLiveCounts = [
+  const dbCouns = getRowsSync().map((i) => i.counter);
+  const liveCouns =  [
     managers["1"].getClone().counter,
     managers["2"].getClone().counter,
     managers["3"].getClone().counter,
   ];
-  const finalDbCounts = FakeDbModel.__counters.map((i) => i.counter);
-
   console.log("-------");
-  console.log("expected: [2006,2003,2013]");
-  console.log("live    : " + JSON.stringify(finalLiveCounts));
-  console.log("db      : " + JSON.stringify(finalDbCounts));
+  console.log(" expected : [2006,2003,2013]");
+  console.log(" db       : " + JSON.stringify(dbCouns));
+  console.log(" live     : " + JSON.stringify(liveCouns));
 }

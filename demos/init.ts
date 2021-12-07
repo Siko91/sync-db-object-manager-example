@@ -7,7 +7,9 @@ export async function loadManagedCounters(): Promise<{
   const instances: FakeDbType[] = await FakeDbModel.find();
   const managers: { [key: string]: LiveObjectManager<FakeDbType> } = {};
   for (const i of instances) {
-    const manager = new LiveObjectManager<FakeDbType>(i, saveToDb);
+    const manager = new LiveObjectManager<FakeDbType>(i, async (obj) =>
+      await FakeDbModel.updateOne(obj._id!, obj)
+    );
     managers[i._id] = manager;
   }
   return managers;
@@ -18,11 +20,8 @@ export async function createManagedCounter(creationData: {
   counter: number;
 }): Promise<{ [key: string]: LiveObjectManager<FakeDbType> }> {
   const newInstance: FakeDbType = await FakeDbModel.create(creationData);
-  const newManager = new LiveObjectManager<FakeDbType>(newInstance, saveToDb);
+  const newManager = new LiveObjectManager<FakeDbType>(newInstance, async (obj) =>
+    await FakeDbModel.updateOne(obj._id!, obj)
+  );
   return { [newInstance._id]: newManager };
-}
-
-async function saveToDb(obj: Partial<FakeDbType>): Promise<void> {
-  await FakeDbModel.updateOne(obj._id!, obj);
-  console.log(`[info] Saved [${obj.name}] with counter ${obj.counter}`);
 }
